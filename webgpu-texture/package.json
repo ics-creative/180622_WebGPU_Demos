@@ -1,0 +1,24 @@
+{
+  "scripts": {
+    "build": "webpack --mode production",
+    "start": "webpack-dev-server --mode development --disableHostCheck",
+    "lint": "tslint --project tslint.json",
+    "format": "tslint --project tslint.json --fix",
+    "metalErrorCheck": "xcrun -sdk iphoneos metal dist/shader/defaultShader.metal -o dist/shader/defaultShader.air"
+  },
+  "devDependencies": {
+    "@types/gl-matrix": "^2.4.0",
+    "@types/stats.js": "^0.17.0",
+    "ts-loader": "^4.4.1",
+    "tslint": "^5.10.0",
+    "typescript": "^2.9.2",
+    "webpack": "^4.12.0",
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-server": "^3.1.4"
+  },
+  "dependencies": {
+    "gl-matrix": "^2.6.1"
+  },
+  "license": "MIT",
+  "private": true
+}

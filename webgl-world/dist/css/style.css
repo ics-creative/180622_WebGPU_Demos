@@ -1,0 +1,15 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+#myCanvas {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}

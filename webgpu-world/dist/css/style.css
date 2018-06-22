@@ -1,0 +1,54 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+#myCanvas {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+body.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(85%, 35%, 35%);
+}
+
+body.error #contents {
+  display: none;
+}
+
+#error {
+  margin: 0;
+  padding: 0;
+  width: 50vw;
+  display: none;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  #error {
+    width: 100vw;
+  }
+}
+
+body.error #error {
+  display: block;
+}
+
+#error h2 {
+  font-weight: bold;
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+
+#error p {
+  font-size: 30px;
+}
