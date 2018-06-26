@@ -1,7 +1,9 @@
+import {GUI, GUIController} from 'dat-gui';
 import {mat4, vec3, vec4} from 'gl-matrix';
 import {ColorShaderProgram} from './project/ColorShaderProgram';
 import {Cube} from './project/Cube';
 import {GLTF} from './project/GLTF';
+import {GUIPanel} from './project/GUIPanel';
 import {LightingShaderProgram} from './project/LightingShaderProgram';
 import {RGB} from './project/RGB';
 import {VertexUniform} from './project/VertexUniform';
@@ -10,13 +12,14 @@ import {ProgramObject} from './webgl/ProgramObject';
 import {RoundCameraController} from './webgl/RoundCameraController';
 import {SceneObject} from './webgl/SceneObject';
 
+declare let dat:any;
+
 export class Main {
   private static RAD:number = Math.PI / 180;
 
   private static CANVAS_WIDTH:number = innerWidth * devicePixelRatio;
   private static CANVAS_HEIGHT:number = innerHeight * devicePixelRatio;
 
-  private static CUBE_NUM:number = 3000;
   private static COLOR_AMBIENT_LIGHT:vec4 = vec4.fromValues(0.2, 0.2, 0.2, 1.0);
   private static COLOR_DIRECTIONAL_LIGHT:vec4 = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
 
@@ -31,6 +34,7 @@ export class Main {
   private camera:Camera;
   private cameraController:RoundCameraController;
   private cube:Cube;
+  private cubeNum:number;
   private cubeList:SceneObject[];
   private lightHelper:SceneObject;
 
@@ -47,6 +51,19 @@ export class Main {
     // Stats setup
     this.stats = new Stats();
     document.body.appendChild(this.stats.dom);
+
+    // GUI setup
+    let gui:GUI = new dat.GUI({autoPlace: true});
+    let instanceFolder:GUI = gui.addFolder('Instance');
+    instanceFolder.open();
+    let panel:GUIPanel = new GUIPanel();
+    let instanceNumSlider:GUIController = instanceFolder.add(panel, 'num', 1000, 4000).step(100);
+    panel.setGUITitle(gui, 'num', 'Num');
+    instanceNumSlider.onFinishChange((value:number) => {
+      this.cubeNum = value;
+      this.resetInstance();
+    });
+    this.cubeNum = panel.num;
 
     // Canvas setup
     this.canvas = <HTMLCanvasElement> document.getElementById(('myCanvas'));
@@ -77,30 +94,8 @@ export class Main {
     this.cube = new Cube();
     this.cube.createBuffer(this.gl);
 
-    // const cubeScale:number = 2.0;
-    // const cubeScale:number = 4.0;
-    const cubeScale:number = 0.04;
-    const cubeRange:number = 100;
-    const pi2:number = Math.PI * 2;
-
     this.cubeList = [];
-    for (let i:number = 0; i < Main.CUBE_NUM; i++) {
-      const obj:SceneObject = new SceneObject();
-      obj.scaleX = obj.scaleY = obj.scaleZ = cubeScale;
-      obj.x = (Math.random() - 0.5) * cubeRange;
-      obj.y = (Math.random() - 0.5) * cubeRange;
-      obj.z = (Math.random() - 0.5) * cubeRange;
-      obj.rotationX = Math.random() * pi2;
-      obj.rotationZ = Math.random() * pi2;
-
-      const vertexUniform:VertexUniform = new VertexUniform();
-      obj.vertexUniform = vertexUniform;
-      // const color:RGB = RGB.createFromHSV(360 * Math.random(), 0.8, 0.9);
-      const color:RGB = RGB.createFromHSV(Math.atan2(obj.z, obj.x) / Main.RAD, 0.8 * Math.sqrt(obj.x * obj.x + obj.z * obj.z) / (cubeRange / 2), 0.9);
-      vertexUniform.baseColor = vec4.fromValues(color.r, color.g, color.b, 1.0);
-
-      this.cubeList.push(obj);
-    }
+    this.resetInstance();
 
     this.lightHelper = new SceneObject();
     this.lightHelper.rotationX = 45 * Main.RAD;
@@ -126,6 +121,39 @@ export class Main {
     this.time = 0;
 
     this.render();
+  }
+
+  private resetInstance():void {
+    const length:number = this.cubeList.length;
+    for (let i:number = 0; i < length; i++) {
+      this.cubeList[i].vertexUniform = null;
+      this.cubeList[i] = undefined;
+    }
+
+    // const cubeScale:number = 2.0;
+    // const cubeScale:number = 4.0;
+    const cubeScale:number = 0.04;
+    const cubeRange:number = 100;
+    const pi2:number = Math.PI * 2;
+
+    this.cubeList = [];
+    for (let i:number = 0; i < this.cubeNum; i++) {
+      const obj:SceneObject = new SceneObject();
+      obj.scaleX = obj.scaleY = obj.scaleZ = cubeScale;
+      obj.x = (Math.random() - 0.5) * cubeRange;
+      obj.y = (Math.random() - 0.5) * cubeRange;
+      obj.z = (Math.random() - 0.5) * cubeRange;
+      obj.rotationX = Math.random() * pi2;
+      obj.rotationZ = Math.random() * pi2;
+
+      const vertexUniform:VertexUniform = new VertexUniform();
+      obj.vertexUniform = vertexUniform;
+      // const color:RGB = RGB.createFromHSV(360 * Math.random(), 0.8, 0.9);
+      const color:RGB = RGB.createFromHSV(Math.atan2(obj.z, obj.x) / Main.RAD, 0.8 * Math.sqrt(obj.x * obj.x + obj.z * obj.z) / (cubeRange / 2), 0.9);
+      vertexUniform.baseColor = vec4.fromValues(color.r, color.g, color.b, 1.0);
+
+      this.cubeList.push(obj);
+    }
   }
 
   private render():void {

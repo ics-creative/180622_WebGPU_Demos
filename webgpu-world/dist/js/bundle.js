@@ -7257,7 +7257,7 @@ class GLTF_GLTF extends Primitive {
 // CONCATENATED MODULE: ./src/project/GUIPanel.ts
 class GUIPanel {
     constructor() {
-        this.num = 2000;
+        this.num = 1000;
     }
     setGUITitle(gui, propertyName, title) {
         let propertyList = gui.domElement.getElementsByClassName('property-name');
@@ -7849,13 +7849,12 @@ class Main_Main {
             this.cubeList[i].vertexUniform = null;
             this.cubeList[i] = undefined;
         }
-        this.cubeList = [];
-        console.log(this.cubeUniformList.length);
         // const cubeScale:number = 2.0;
         // const cubeScale:number = 4.0;
         const cubeScale = 0.04;
         const cubeRange = 100;
         const pi2 = Math.PI * 2;
+        this.cubeList = [];
         for (let i = 0; i < this.cubeNum; i++) {
             const obj = new SceneObject_SceneObject();
             obj.scaleX = obj.scaleY = obj.scaleZ = cubeScale;

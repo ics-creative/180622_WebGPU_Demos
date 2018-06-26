@@ -177,8 +177,6 @@ export class Main {
       this.cubeList[i] = undefined;
 
     }
-    this.cubeList = [];
-    console.log(this.cubeUniformList.length);
 
     // const cubeScale:number = 2.0;
     // const cubeScale:number = 4.0;
@@ -186,6 +184,7 @@ export class Main {
     const cubeRange:number = 100;
     const pi2:number = Math.PI * 2;
 
+    this.cubeList = [];
     for (let i:number = 0; i < this.cubeNum; i++) {
       const obj:SceneObject = new SceneObject();
       obj.scaleX = obj.scaleY = obj.scaleZ = cubeScale;

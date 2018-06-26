@@ -6,6 +6,7 @@
     "format": "tslint --project tslint.json --fix"
   },
   "devDependencies": {
+    "@types/dat-gui": "^0.6.3",
     "@types/gl-matrix": "^2.4.0",
     "@types/stats.js": "^0.17.0",
     "ts-loader": "^4.4.1",
