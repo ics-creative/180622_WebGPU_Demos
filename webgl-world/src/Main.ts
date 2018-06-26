@@ -8,6 +8,7 @@ import {LightingShaderProgram} from './project/LightingShaderProgram';
 import {RGB} from './project/RGB';
 import {VertexUniform} from './project/VertexUniform';
 import {Camera} from './webgl/Camera';
+import {Primitive} from './webgl/Primitive';
 import {ProgramObject} from './webgl/ProgramObject';
 import {RoundCameraController} from './webgl/RoundCameraController';
 import {SceneObject} from './webgl/SceneObject';
@@ -34,6 +35,7 @@ export class Main {
   private camera:Camera;
   private cameraController:RoundCameraController;
   private cube:Cube;
+  private useModel:boolean;
   private cubeNum:number;
   private cubeList:SceneObject[];
   private lightHelper:SceneObject;
@@ -63,7 +65,14 @@ export class Main {
       this.cubeNum = value;
       this.resetInstance();
     });
+    let useModelCheck:GUIController = instanceFolder.add(panel, 'useModel');
+    panel.setGUITitle(gui, 'useModel', 'Model');
+    useModelCheck.onFinishChange((value:boolean) => {
+      this.useModel = value;
+      this.resetInstance();
+    });
     this.cubeNum = panel.num;
+    this.useModel = panel.useModel;
 
     // Canvas setup
     this.canvas = <HTMLCanvasElement> document.getElementById(('myCanvas'));
@@ -106,7 +115,7 @@ export class Main {
 
     this.model = new GLTF();
     // await this.model.loadModel('assets/Suzanne.gltf', true);
-    await this.model.loadModel('assets/Duck.gltf', true);
+    await this.model.loadModel('assets/Suzanne.gltf', true);
     this.model.createBuffer(this.gl);
 
     // Initialize camera
@@ -130,9 +139,13 @@ export class Main {
       this.cubeList[i] = undefined;
     }
 
-    // const cubeScale:number = 2.0;
-    // const cubeScale:number = 4.0;
-    const cubeScale:number = 0.04;
+    let cubeScale:number;
+    if (this.useModel) {
+      cubeScale = 4.0;
+    } else {
+      cubeScale = 2.0;
+    }
+
     const cubeRange:number = 100;
     const pi2:number = Math.PI * 2;
 
@@ -187,8 +200,13 @@ export class Main {
 
     // Render cube
     this.cubeProgram.bindProgram(this.gl);
-    // this.cube.bindVertexbuffer(this.gl, this.cubeProgram);
-    this.model.bindVertexbuffer(this.gl, this.cubeProgram);
+    let geometry:Primitive;
+    if (this.useModel) {
+      geometry = this.model;
+    } else {
+      geometry = this.cube;
+    }
+    geometry.bindVertexbuffer(this.gl, this.cubeProgram);
     for (let i:number = 0; i < cubeLength; i++) {
       const obj:SceneObject = this.cubeList[i];
       const objMMatrix:mat4 = obj.getModelMtx();
@@ -201,8 +219,7 @@ export class Main {
       this.cubeProgram.getUniform('baseColor').vector4 = (obj.vertexUniform as VertexUniform).baseColor;
       this.cubeProgram.bindUniform(this.gl);
 
-      // this.gl.drawArrays(this.gl.TRIANGLES, 0, this.cube.numVertices);
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, this.model.numVertices);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, geometry.numVertices);
     }
 
     // Render light helper

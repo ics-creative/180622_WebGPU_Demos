@@ -7518,6 +7518,7 @@ class GLTF_GLTF extends Primitive {
 class GUIPanel {
     constructor() {
         this.num = 1000;
+        this.useModel = true;
     }
     setGUITitle(gui, propertyName, title) {
         let propertyList = gui.domElement.getElementsByClassName('property-name');
@@ -8044,7 +8045,14 @@ class Main_Main {
             this.cubeNum = value;
             this.resetInstance();
         });
+        let useModelCheck = instanceFolder.add(panel, 'useModel');
+        panel.setGUITitle(gui, 'useModel', 'Model');
+        useModelCheck.onFinishChange((value) => {
+            this.useModel = value;
+            this.resetInstance();
+        });
         this.cubeNum = panel.num;
+        this.useModel = panel.useModel;
         // Canvas setup
         this.canvas = document.getElementById(('myCanvas'));
         this.canvas.width = Main_Main.CANVAS_WIDTH;
@@ -8078,7 +8086,7 @@ class Main_Main {
         vertexUniform.baseColor = Main_Main.COLOR_DIRECTIONAL_LIGHT;
         this.model = new GLTF_GLTF();
         // await this.model.loadModel('assets/Suzanne.gltf', true);
-        await this.model.loadModel('assets/Duck.gltf', true);
+        await this.model.loadModel('assets/Suzanne.gltf', true);
         this.model.createBuffer(this.gl);
         // Initialize camera
         this.camera = new Camera_Camera(45 * Main_Main.RAD, Main_Main.CANVAS_WIDTH / Main_Main.CANVAS_HEIGHT, 0.1, 1000.0);
@@ -8097,9 +8105,13 @@ class Main_Main {
             this.cubeList[i].vertexUniform = null;
             this.cubeList[i] = undefined;
         }
-        // const cubeScale:number = 2.0;
-        // const cubeScale:number = 4.0;
-        const cubeScale = 0.04;
+        let cubeScale;
+        if (this.useModel) {
+            cubeScale = 4.0;
+        }
+        else {
+            cubeScale = 2.0;
+        }
         const cubeRange = 100;
         const pi2 = Math.PI * 2;
         this.cubeList = [];
@@ -8144,8 +8156,14 @@ class Main_Main {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         // Render cube
         this.cubeProgram.bindProgram(this.gl);
-        // this.cube.bindVertexbuffer(this.gl, this.cubeProgram);
-        this.model.bindVertexbuffer(this.gl, this.cubeProgram);
+        let geometry;
+        if (this.useModel) {
+            geometry = this.model;
+        }
+        else {
+            geometry = this.cube;
+        }
+        geometry.bindVertexbuffer(this.gl, this.cubeProgram);
         for (let i = 0; i < cubeLength; i++) {
             const obj = this.cubeList[i];
             const objMMatrix = obj.getModelMtx();
@@ -8156,8 +8174,7 @@ class Main_Main {
             this.cubeProgram.getUniform('directionalLightDirection').vector3 = lightDirection;
             this.cubeProgram.getUniform('baseColor').vector4 = obj.vertexUniform.baseColor;
             this.cubeProgram.bindUniform(this.gl);
-            // this.gl.drawArrays(this.gl.TRIANGLES, 0, this.cube.numVertices);
-            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.model.numVertices);
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, geometry.numVertices);
         }
         // Render light helper
         this.lightHelperProgram.bindProgram(this.gl);

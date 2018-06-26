@@ -2,9 +2,11 @@ import {GUI} from 'dat-gui';
 
 export class GUIPanel {
   public num:number;
+  public useModel:boolean;
 
   constructor() {
     this.num = 1000;
+    this.useModel = true;
   }
 
   public setGUITitle(gui:GUI, propertyName:string, title:string):void {

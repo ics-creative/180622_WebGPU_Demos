@@ -6,6 +6,7 @@ import {GUIPanel} from './project/GUIPanel';
 import {RGB} from './project/RGB';
 import {VertexUniform} from './project/VertexUniform';
 import {Camera} from './webgpu/Camera';
+import {Primitive} from './webgpu/Primitive';
 import {RoundCameraController} from './webgpu/RoundCameraController';
 import {SceneObject} from './webgpu/SceneObject';
 
@@ -33,6 +34,7 @@ export class Main {
   private camera:Camera;
   private cameraController:RoundCameraController;
   private cube:Cube;
+  private useModel:boolean;
   private cubeNum:number;
   private cubeList:SceneObject[];
   private cubeUniformList:VertexUniform[];
@@ -69,7 +71,14 @@ export class Main {
       this.cubeNum = value;
       this.resetInstance();
     });
+    let useModelCheck:GUIController = instanceFolder.add(panel, 'useModel');
+    panel.setGUITitle(gui, 'useModel', 'Model');
+    useModelCheck.onFinishChange((value:boolean) => {
+      this.useModel = value;
+      this.resetInstance();
+    });
     this.cubeNum = panel.num;
+    this.useModel = panel.useModel;
 
     // Canvas setup
     this.canvas = <HTMLCanvasElement> document.getElementById(('myCanvas'));
@@ -151,8 +160,8 @@ export class Main {
     vertexUniform.baseColor = Main.COLOR_DIRECTIONAL_LIGHT;
 
     this.model = new GLTF();
-    // await this.model.loadModel('assets/Suzanne.gltf', true);
-    await this.model.loadModel('assets/Duck.gltf', true);
+    await this.model.loadModel('assets/Suzanne.gltf', true);
+    // await this.model.loadModel('assets/Duck.gltf', true);
     this.model.createBuffer(this.gpu);
 
     // Initialize camera
@@ -178,9 +187,13 @@ export class Main {
 
     }
 
-    // const cubeScale:number = 2.0;
-    // const cubeScale:number = 4.0;
-    const cubeScale:number = 0.04;
+    let cubeScale:number;
+    if (this.useModel) {
+      cubeScale = 4.0;
+    } else {
+      cubeScale = 2.0;
+    }
+
     const cubeRange:number = 100;
     const pi2:number = Math.PI * 2;
 
@@ -249,8 +262,13 @@ export class Main {
     const cubeRenderCommandEncoder:WebGPURenderCommandEncoder = commandBuffer.createRenderCommandEncoderWithDescriptor(this.renderPassDescriptor);
     cubeRenderCommandEncoder.setRenderPipelineState(this.cubeRenderPipelineState);
     cubeRenderCommandEncoder.setDepthStencilState(this.depthStencilState);
-    // cubeRenderCommandEncoder.setVertexBuffer(this.cube.vertexBuffer, 0, 0);
-    cubeRenderCommandEncoder.setVertexBuffer(this.model.vertexBuffer, 0, 0);
+    let geometry:Primitive;
+    if (this.useModel) {
+      geometry = this.model;
+    } else {
+      geometry = this.cube;
+    }
+    cubeRenderCommandEncoder.setVertexBuffer(geometry.vertexBuffer, 0, 0);
 
     for (let i:number = 0; i < cubeLength; i++) {
       const obj:SceneObject = this.cubeList[i];
@@ -264,8 +282,7 @@ export class Main {
       vertexUniform.directionalLightDirection = lightDirection;
       cubeRenderCommandEncoder.setVertexBuffer(obj.vertexUniform.buffer, 0, 1);
 
-      // cubeRenderCommandEncoder.drawPrimitives(WebGPUPrimitiveType.triangle, 0, this.cube.numVertices);
-      cubeRenderCommandEncoder.drawPrimitives(WebGPUPrimitiveType.triangle, 0, this.model.numVertices);
+      cubeRenderCommandEncoder.drawPrimitives(WebGPUPrimitiveType.triangle, 0, geometry.numVertices);
     }
     cubeRenderCommandEncoder.endEncoding();
 
