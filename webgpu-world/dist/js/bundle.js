@@ -7254,6 +7254,23 @@ class GLTF_GLTF extends Primitive {
     }
 }
 
+// CONCATENATED MODULE: ./src/project/GUIPanel.ts
+class GUIPanel {
+    constructor() {
+        this.num = 2000;
+    }
+    setGUITitle(gui, propertyName, title) {
+        let propertyList = gui.domElement.getElementsByClassName('property-name');
+        let length = propertyList.length;
+        for (let i = 0; i < length; i++) {
+            let element = propertyList[i];
+            if (element.innerHTML === propertyName) {
+                element.innerHTML = title;
+            }
+        }
+    }
+}
+
 // CONCATENATED MODULE: ./src/project/RGB.ts
 class RGB {
     constructor(r, g, b) {
@@ -7719,6 +7736,7 @@ class SceneObject_SceneObject {
 
 
 
+
 class Main_Main {
     constructor() {
         console.log(new Date());
@@ -7733,6 +7751,18 @@ class Main_Main {
         // Stats setup
         this.stats = new Stats();
         document.body.appendChild(this.stats.dom);
+        // GUI setup
+        let gui = new dat.GUI({ autoPlace: true });
+        let instanceFolder = gui.addFolder('Instance');
+        instanceFolder.open();
+        let panel = new GUIPanel();
+        let instanceNumSlider = instanceFolder.add(panel, 'num', 1000, 4000).step(100);
+        panel.setGUITitle(gui, 'num', 'Num');
+        instanceNumSlider.onFinishChange((value) => {
+            this.cubeNum = value;
+            this.resetInstance();
+        });
+        this.cubeNum = panel.num;
         // Canvas setup
         this.canvas = document.getElementById(('myCanvas'));
         this.canvas.width = Main_Main.CANVAS_WIDTH;
@@ -7787,30 +7817,9 @@ class Main_Main {
         // Initialize objects
         this.cube = new Cube_Cube();
         this.cube.createBuffer(this.gpu);
-        // const cubeScale:number = 2.0;
-        // const cubeScale:number = 4.0;
-        const cubeScale = 0.04;
-        const cubeRange = 100;
-        const pi2 = Math.PI * 2;
         this.cubeList = [];
-        for (let i = 0; i < Main_Main.CUBE_NUM; i++) {
-            const obj = new SceneObject_SceneObject();
-            obj.scaleX = obj.scaleY = obj.scaleZ = cubeScale;
-            obj.x = (Math.random() - 0.5) * cubeRange;
-            obj.y = (Math.random() - 0.5) * cubeRange;
-            obj.z = (Math.random() - 0.5) * cubeRange;
-            obj.rotationX = Math.random() * pi2;
-            obj.rotationZ = Math.random() * pi2;
-            const vertexUniform = new VertexUniform_VertexUniform();
-            vertexUniform.createBuffer(this.gpu);
-            obj.vertexUniform = vertexUniform;
-            // const color:RGB = RGB.createFromHSV(360 * Math.random(), 0.8, 0.9);
-            const color = RGB.createFromHSV(Math.atan2(obj.z, obj.x) / Main_Main.RAD, 0.8 * Math.sqrt(obj.x * obj.x + obj.z * obj.z) / (cubeRange / 2), 0.9);
-            vertexUniform.baseColor = new Float32Array([color.r, color.g, color.b, 1.0]);
-            vertexUniform.ambientLightColor = Main_Main.COLOR_AMBIENT_LIGHT;
-            vertexUniform.directionalLightColor = Main_Main.COLOR_DIRECTIONAL_LIGHT;
-            this.cubeList.push(obj);
-        }
+        this.cubeUniformList = [];
+        this.resetInstance();
         this.lightHelper = new SceneObject_SceneObject();
         this.lightHelper.rotationX = 45 * Main_Main.RAD;
         this.lightHelper.rotationZ = 45 * Main_Main.RAD;
@@ -7832,6 +7841,45 @@ class Main_Main {
         // Initialize values
         this.time = 0;
         this.render();
+    }
+    resetInstance() {
+        const length = this.cubeList.length;
+        for (let i = 0; i < length; i++) {
+            this.cubeUniformList.push(this.cubeList[i].vertexUniform);
+            this.cubeList[i].vertexUniform = null;
+            this.cubeList[i] = undefined;
+        }
+        this.cubeList = [];
+        console.log(this.cubeUniformList.length);
+        // const cubeScale:number = 2.0;
+        // const cubeScale:number = 4.0;
+        const cubeScale = 0.04;
+        const cubeRange = 100;
+        const pi2 = Math.PI * 2;
+        for (let i = 0; i < this.cubeNum; i++) {
+            const obj = new SceneObject_SceneObject();
+            obj.scaleX = obj.scaleY = obj.scaleZ = cubeScale;
+            obj.x = (Math.random() - 0.5) * cubeRange;
+            obj.y = (Math.random() - 0.5) * cubeRange;
+            obj.z = (Math.random() - 0.5) * cubeRange;
+            obj.rotationX = Math.random() * pi2;
+            obj.rotationZ = Math.random() * pi2;
+            let vertexUniform;
+            if (this.cubeUniformList.length) {
+                vertexUniform = this.cubeUniformList.shift();
+            }
+            else {
+                vertexUniform = new VertexUniform_VertexUniform();
+                vertexUniform.createBuffer(this.gpu);
+            }
+            obj.vertexUniform = vertexUniform;
+            // const color:RGB = RGB.createFromHSV(360 * Math.random(), 0.8, 0.9);
+            const color = RGB.createFromHSV(Math.atan2(obj.z, obj.x) / Main_Main.RAD, 0.8 * Math.sqrt(obj.x * obj.x + obj.z * obj.z) / (cubeRange / 2), 0.9);
+            vertexUniform.baseColor = new Float32Array([color.r, color.g, color.b, 1.0]);
+            vertexUniform.ambientLightColor = Main_Main.COLOR_AMBIENT_LIGHT;
+            vertexUniform.directionalLightColor = Main_Main.COLOR_DIRECTIONAL_LIGHT;
+            this.cubeList.push(obj);
+        }
     }
     render() {
         this.stats.begin();
@@ -7906,7 +7954,6 @@ class Main_Main {
 Main_Main.RAD = Math.PI / 180;
 Main_Main.CANVAS_WIDTH = innerWidth * devicePixelRatio;
 Main_Main.CANVAS_HEIGHT = innerHeight * devicePixelRatio;
-Main_Main.CUBE_NUM = 3000;
 Main_Main.COLOR_AMBIENT_LIGHT = new Float32Array([0.2, 0.2, 0.2, 1.0]);
 Main_Main.COLOR_DIRECTIONAL_LIGHT = new Float32Array([0.8, 0.8, 0.8, 1.0]);
 window.addEventListener('DOMContentLoaded', () => {
