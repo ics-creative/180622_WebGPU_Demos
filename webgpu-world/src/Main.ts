@@ -13,7 +13,7 @@ export class Main {
   private static CANVAS_WIDTH:number = innerWidth * devicePixelRatio;
   private static CANVAS_HEIGHT:number = innerHeight * devicePixelRatio;
 
-  private static CUBE_NUM:number = 1000;
+  private static CUBE_NUM:number = 3000;
   private static COLOR_AMBIENT_LIGHT:Float32Array = new Float32Array([0.2, 0.2, 0.2, 1.0]);
   private static COLOR_DIRECTIONAL_LIGHT:Float32Array = new Float32Array([0.8, 0.8, 0.8, 1.0]);
 

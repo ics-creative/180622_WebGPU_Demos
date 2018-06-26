@@ -1,6 +1,7 @@
 import {mat4, vec3, vec4} from 'gl-matrix';
 import {ColorShaderProgram} from './project/ColorShaderProgram';
 import {Cube} from './project/Cube';
+import {GLTF} from './project/GLTF';
 import {LightingShaderProgram} from './project/LightingShaderProgram';
 import {RGB} from './project/RGB';
 import {VertexUniform} from './project/VertexUniform';
@@ -15,7 +16,7 @@ export class Main {
   private static CANVAS_WIDTH:number = innerWidth * devicePixelRatio;
   private static CANVAS_HEIGHT:number = innerHeight * devicePixelRatio;
 
-  private static CUBE_NUM:number = 1000;
+  private static CUBE_NUM:number = 3000;
   private static COLOR_AMBIENT_LIGHT:vec4 = vec4.fromValues(0.2, 0.2, 0.2, 1.0);
   private static COLOR_DIRECTIONAL_LIGHT:vec4 = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
 
@@ -32,6 +33,8 @@ export class Main {
   private cube:Cube;
   private cubeList:SceneObject[];
   private lightHelper:SceneObject;
+
+  private model:GLTF;
 
   private time:number;
 
@@ -74,7 +77,9 @@ export class Main {
     this.cube = new Cube();
     this.cube.createBuffer(this.gl);
 
-    const cubeScale:number = 2.0;
+    // const cubeScale:number = 2.0;
+    // const cubeScale:number = 4.0;
+    const cubeScale:number = 0.04;
     const cubeRange:number = 100;
     const pi2:number = Math.PI * 2;
 
@@ -103,6 +108,11 @@ export class Main {
     const vertexUniform:VertexUniform = new VertexUniform();
     this.lightHelper.vertexUniform = vertexUniform;
     vertexUniform.baseColor = Main.COLOR_DIRECTIONAL_LIGHT;
+
+    this.model = new GLTF();
+    // await this.model.loadModel('assets/Suzanne.gltf', true);
+    await this.model.loadModel('assets/Duck.gltf', true);
+    this.model.createBuffer(this.gl);
 
     // Initialize camera
     this.camera = new Camera(45 * Main.RAD, Main.CANVAS_WIDTH / Main.CANVAS_HEIGHT, 0.1, 1000.0);
@@ -149,7 +159,8 @@ export class Main {
 
     // Render cube
     this.cubeProgram.bindProgram(this.gl);
-    this.cube.bindVertexbuffer(this.gl, this.cubeProgram);
+    // this.cube.bindVertexbuffer(this.gl, this.cubeProgram);
+    this.model.bindVertexbuffer(this.gl, this.cubeProgram);
     for (let i:number = 0; i < cubeLength; i++) {
       const obj:SceneObject = this.cubeList[i];
       const objMMatrix:mat4 = obj.getModelMtx();
@@ -162,7 +173,8 @@ export class Main {
       this.cubeProgram.getUniform('baseColor').vector4 = (obj.vertexUniform as VertexUniform).baseColor;
       this.cubeProgram.bindUniform(this.gl);
 
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, this.cube.numVertices);
+      // this.gl.drawArrays(this.gl.TRIANGLES, 0, this.cube.numVertices);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, this.model.numVertices);
     }
 
     // Render light helper

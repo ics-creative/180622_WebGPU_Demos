@@ -7010,6 +7010,250 @@ const vec2_forEach = (function() {
 
 
 
+// CONCATENATED MODULE: ./src/webgpu/Primitive.ts
+class Primitive {
+    get numAttributes() {
+        return this._numAttributes;
+    }
+    get numVertices() {
+        return this._numVertices;
+    }
+    get bufferData() {
+        return this._bufferData;
+    }
+    get vertexBuffer() {
+        return this._vertexBuffer;
+    }
+    constructor() {
+    }
+    createBuffer(gpu) {
+        this._vertexBuffer = gpu.createBuffer(this._bufferData);
+    }
+}
+
+// CONCATENATED MODULE: ./src/project/Cube.ts
+
+class Cube_Cube extends Primitive {
+    constructor() {
+        super();
+        this._numAttributes = 6;
+        this._numVertices = 36;
+        this._bufferData = new Float32Array([
+            // position(x,y,z), normal(x,y,z)
+            1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
+            -1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
+            -1.0, -1.0, -1.0, 0.0, -1.0, 0.0,
+            1.0, -1.0, -1.0, 0.0, -1.0, 0.0,
+            1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
+            -1.0, -1.0, -1.0, 0.0, -1.0, 0.0,
+            1.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, -1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, -1.0, -1.0, 1.0, 0.0, 0.0,
+            1.0, 1.0, -1.0, 1.0, 0.0, 0.0,
+            1.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, -1.0, -1.0, 1.0, 0.0, 0.0,
+            -1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            1.0, 1.0, -1.0, 0.0, 1.0, 0.0,
+            -1.0, 1.0, -1.0, 0.0, 1.0, 0.0,
+            -1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            1.0, 1.0, -1.0, 0.0, 1.0, 0.0,
+            -1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, 1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, 1.0, -1.0, -1.0, 0.0, 0.0,
+            -1.0, -1.0, -1.0, -1.0, 0.0, 0.0,
+            -1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, 1.0, -1.0, -1.0, 0.0, 0.0,
+            1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            -1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            -1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
+            -1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
+            1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
+            1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            1.0, -1.0, -1.0, 0.0, 0.0, -1.0,
+            -1.0, -1.0, -1.0, 0.0, 0.0, -1.0,
+            -1.0, 1.0, -1.0, 0.0, 0.0, -1.0,
+            1.0, 1.0, -1.0, 0.0, 0.0, -1.0,
+            1.0, -1.0, -1.0, 0.0, 0.0, -1.0,
+            -1.0, 1.0, -1.0, 0.0, 0.0, -1.0
+        ]);
+    }
+}
+
+// CONCATENATED MODULE: ./src/project/GLTFLoader.ts
+class GLTFLoader {
+    static async load(url) {
+        const json = await fetch(url).then((response) => response.json());
+        const pathArr = url.split('/');
+        pathArr.pop();
+        const relativePath = pathArr.join('/');
+        if (!GLTFLoader.glcontext) {
+            GLTFLoader.glcontext = document.createElement('canvas').getContext('webgl');
+        }
+        const glcontext = GLTFLoader.glcontext;
+        console.log(json);
+        const mesh = json.meshes[0];
+        const primitive = mesh.primitives[0];
+        const data = {
+            primitiveType: 0 /* POINTS */,
+            numVertices: 0,
+            position: null,
+            normal: null,
+            indices: null
+        };
+        switch (primitive.mode) {
+            case glcontext.POINTS:
+                data.primitiveType = 0 /* POINTS */;
+                break;
+            case glcontext.LINES:
+                data.primitiveType = 1 /* LINES */;
+                break;
+            case glcontext.TRIANGLES:
+                data.primitiveType = 2 /* TRIANGLES */;
+                break;
+            default:
+                return data;
+        }
+        const bufferDataList = await GLTFLoader.loadBuffers(json.buffers, relativePath);
+        const accessorsDataList = GLTFLoader.loadAccessors(json.accessors, json.bufferViews, bufferDataList);
+        const attributes = primitive.attributes;
+        const positionAccessorIndex = attributes.POSITION;
+        const positionAccessor = json.accessors[positionAccessorIndex];
+        data.numVertices = positionAccessor.count;
+        data.position = {
+            data: accessorsDataList[positionAccessorIndex],
+            num: GLTFLoader.getAccessorTypeSize(positionAccessor.type),
+            min: positionAccessor.min,
+            max: positionAccessor.max
+        };
+        // console.log(data);
+        if (attributes.hasOwnProperty('NORMAL')) {
+            const normalAccessorIndex = attributes.NORMAL;
+            data.normal = {
+                data: accessorsDataList[normalAccessorIndex],
+                num: GLTFLoader.getAccessorTypeSize(json.accessors[normalAccessorIndex].type)
+            };
+        }
+        if (primitive.hasOwnProperty('indices')) {
+            const indicesAccessorIndex = primitive.indices;
+            data.indices = {
+                data: accessorsDataList[indicesAccessorIndex],
+                num: GLTFLoader.getAccessorTypeSize(json.accessors[indicesAccessorIndex].type)
+            };
+        }
+        return data;
+    }
+    static async loadBuffers(buffers, relativePath) {
+        const bufferDataList = [];
+        const length = buffers.length;
+        for (let i = 0; i < length; i++) {
+            const buffer = buffers[i];
+            const bufferData = await fetch(relativePath + '/' + buffer.uri).then((response) => response.arrayBuffer());
+            if (bufferData.byteLength === buffer.byteLength) {
+                bufferDataList.push(bufferData);
+            }
+        }
+        return bufferDataList;
+    }
+    static loadAccessors(accessors, bufferViews, bufferDataList) {
+        const accessorsDataList = [];
+        const length = accessors.length;
+        for (let i = 0; i < length; i++) {
+            const accessor = accessors[i];
+            const bufferView = bufferViews[accessor.bufferView];
+            const bufferData = bufferDataList[bufferView.buffer];
+            switch (accessor.componentType) {
+                case GLTFLoader.glcontext.BYTE:
+                    break;
+                case GLTFLoader.glcontext.UNSIGNED_BYTE:
+                    break;
+                case GLTFLoader.glcontext.SHORT:
+                    break;
+                case GLTFLoader.glcontext.UNSIGNED_SHORT:
+                    const uint16Array = new Uint16Array(bufferData, bufferView.byteOffset + accessor.byteOffset, accessor.count * GLTFLoader.getAccessorTypeSize(accessor.type));
+                    accessorsDataList.push(uint16Array);
+                    break;
+                case GLTFLoader.glcontext.INT:
+                    break;
+                case GLTFLoader.glcontext.UNSIGNED_INT:
+                    break;
+                case GLTFLoader.glcontext.FLOAT:
+                    const float32Array = new Float32Array(bufferData, bufferView.byteOffset + accessor.byteOffset, accessor.count * GLTFLoader.getAccessorTypeSize(accessor.type));
+                    accessorsDataList.push(float32Array);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return accessorsDataList;
+    }
+    static getAccessorTypeSize(accessorType) {
+        let size = 0;
+        switch (accessorType) {
+            case 'SCALAR':
+                size = 1 /* SCALAR */;
+                break;
+            case 'VEC2':
+                size = 2 /* VEC2 */;
+                break;
+            case 'VEC3':
+                size = 3 /* VEC3 */;
+                break;
+            case 'VEC4':
+                size = 4 /* VEC4 */;
+                break;
+            case 'MAT2':
+                size = 4 /* MAT2 */;
+                break;
+            case 'MAT3':
+                size = 9 /* MAT3 */;
+                break;
+            case 'MAT4':
+                size = 16 /* MAT4 */;
+                break;
+        }
+        return size;
+    }
+    constructor() {
+    }
+}
+
+// CONCATENATED MODULE: ./src/project/GLTF.ts
+
+
+class GLTF_GLTF extends Primitive {
+    constructor() {
+        super();
+    }
+    async loadModel(url, centering = false) {
+        const data = await GLTFLoader.load(url);
+        const numIndices = data.indices.data.length;
+        this._numAttributes = data.position.num + data.normal.num;
+        this._numVertices = numIndices;
+        let centerX = 0.0;
+        let centerY = 0.0;
+        let centerZ = 0.0;
+        if (centering) {
+            const posMin = data.position.min;
+            const posMax = data.position.max;
+            centerX = (posMax[0] - posMin[0]) / 2 + posMin[0];
+            centerY = (posMax[1] - posMin[1]) / 2 + posMin[1];
+            centerZ = (posMax[2] - posMin[2]) / 2 + posMin[2];
+        }
+        this._bufferData = new Float32Array(this._numAttributes * this._numVertices);
+        for (let i = 0; i < this._numVertices; i++) {
+            const bufferVertexOffset = i * 6;
+            const sourceVertexOffset = data.indices.data[i] * 3;
+            this._bufferData[bufferVertexOffset] = data.position.data[sourceVertexOffset] - centerX;
+            this._bufferData[bufferVertexOffset + 1] = data.position.data[sourceVertexOffset + 1] - centerY;
+            this._bufferData[bufferVertexOffset + 2] = data.position.data[sourceVertexOffset + 2] - centerZ;
+            this._bufferData[bufferVertexOffset + 3] = data.normal.data[sourceVertexOffset];
+            this._bufferData[bufferVertexOffset + 4] = data.normal.data[sourceVertexOffset + 1];
+            this._bufferData[bufferVertexOffset + 5] = data.normal.data[sourceVertexOffset + 2];
+        }
+    }
+}
+
 // CONCATENATED MODULE: ./src/project/RGB.ts
 class RGB {
     constructor(r, g, b) {
@@ -7068,6 +7312,83 @@ class RGB {
         return color;
     }
 }
+
+// CONCATENATED MODULE: ./src/webgpu/Uniform.ts
+class Uniform {
+    get bufferData() {
+        return this._bufferData;
+    }
+    get bufferDataLength() {
+        return this._bufferDataLength;
+    }
+    get buffer() {
+        return this._buffer;
+    }
+    constructor() {
+    }
+    createBuffer(gpu) {
+        this._buffer = gpu.createBuffer(new Float32Array(this._bufferDataLength));
+        this._bufferData = new Float32Array(this._buffer.contents);
+    }
+    _copyData(data, offset, count) {
+        for (let i = 0; i < count; i++) {
+            this._bufferData[offset + i] = data[i];
+        }
+    }
+}
+
+// CONCATENATED MODULE: ./src/project/VertexUniform.ts
+
+class VertexUniform_VertexUniform extends Uniform {
+    constructor() {
+        super();
+        this._bufferDataLength = VertexUniform_VertexUniform.BUFFER_LENGTH;
+    }
+    // Layout
+    // 0-15 = mvpMatrix:float4x4
+    // 16-31 = modelMatrix:float4x4
+    // 32-35 = baseColor:float4
+    // 36-39 = ambientLightColor:float4
+    // 40-43 = directionalLightColor:float4
+    // 44-46 = directionalLightDirection:float3
+    get mvpMatrix() {
+        return this._bufferData.subarray(0, 16);
+    }
+    set mvpMatrix(value) {
+        this._copyData(value, 0, 16);
+    }
+    get modelMatrix() {
+        return this._bufferData.subarray(16, 32);
+    }
+    set modelMatrix(value) {
+        this._copyData(value, 16, 16);
+    }
+    get baseColor() {
+        return this._bufferData.subarray(32, 35);
+    }
+    set baseColor(value) {
+        this._copyData(value, 32, 4);
+    }
+    get ambientLightColor() {
+        return this._bufferData.subarray(36, 39);
+    }
+    set ambientLightColor(value) {
+        this._copyData(value, 36, 4);
+    }
+    get directionalLightColor() {
+        return this._bufferData.subarray(40, 43);
+    }
+    set directionalLightColor(value) {
+        this._copyData(value, 40, 4);
+    }
+    get directionalLightDirection() {
+        return this._bufferData.subarray(44, 46);
+    }
+    set directionalLightDirection(value) {
+        this._copyData(value, 44, 3);
+    }
+}
+VertexUniform_VertexUniform.BUFFER_LENGTH = 47;
 
 // CONCATENATED MODULE: ./src/webgpu/Camera.ts
 
@@ -7388,155 +7709,9 @@ class SceneObject_SceneObject {
     }
 }
 
-// CONCATENATED MODULE: ./src/webgpu/Uniform.ts
-class Uniform {
-    get bufferData() {
-        return this._bufferData;
-    }
-    get bufferDataLength() {
-        return this._bufferDataLength;
-    }
-    get buffer() {
-        return this._buffer;
-    }
-    constructor() {
-    }
-    createBuffer(gpu) {
-        this._buffer = gpu.createBuffer(new Float32Array(this._bufferDataLength));
-        this._bufferData = new Float32Array(this._buffer.contents);
-    }
-    _copyData(data, offset, count) {
-        for (let i = 0; i < count; i++) {
-            this._bufferData[offset + i] = data[i];
-        }
-    }
-}
-
-// CONCATENATED MODULE: ./src/project/VertexUniform.ts
-
-class VertexUniform_VertexUniform extends Uniform {
-    constructor() {
-        super();
-        this._bufferDataLength = VertexUniform_VertexUniform.BUFFER_LENGTH;
-    }
-    // Layout
-    // 0-15 = mvpMatrix:float4x4
-    // 16-31 = modelMatrix:float4x4
-    // 32-35 = baseColor:float4
-    // 36-39 = ambientLightColor:float4
-    // 40-43 = directionalLightColor:float4
-    // 44-46 = directionalLightDirection:float3
-    get mvpMatrix() {
-        return this._bufferData.subarray(0, 16);
-    }
-    set mvpMatrix(value) {
-        this._copyData(value, 0, 16);
-    }
-    get modelMatrix() {
-        return this._bufferData.subarray(16, 32);
-    }
-    set modelMatrix(value) {
-        this._copyData(value, 16, 16);
-    }
-    get baseColor() {
-        return this._bufferData.subarray(32, 35);
-    }
-    set baseColor(value) {
-        this._copyData(value, 32, 4);
-    }
-    get ambientLightColor() {
-        return this._bufferData.subarray(36, 39);
-    }
-    set ambientLightColor(value) {
-        this._copyData(value, 36, 4);
-    }
-    get directionalLightColor() {
-        return this._bufferData.subarray(40, 43);
-    }
-    set directionalLightColor(value) {
-        this._copyData(value, 40, 4);
-    }
-    get directionalLightDirection() {
-        return this._bufferData.subarray(44, 46);
-    }
-    set directionalLightDirection(value) {
-        this._copyData(value, 44, 3);
-    }
-}
-VertexUniform_VertexUniform.BUFFER_LENGTH = 47;
-
-// CONCATENATED MODULE: ./src/webgpu/Primitive.ts
-class Primitive {
-    get numAttributes() {
-        return this._numAttributes;
-    }
-    get numVertices() {
-        return this._numVertices;
-    }
-    get bufferData() {
-        return this._bufferData;
-    }
-    get vertexBuffer() {
-        return this._vertexBuffer;
-    }
-    constructor() {
-    }
-    createBuffer(gpu) {
-        this._vertexBuffer = gpu.createBuffer(this._bufferData);
-    }
-}
-
-// CONCATENATED MODULE: ./src/project/Cube.ts
-
-class Cube_Cube extends Primitive {
-    constructor() {
-        super();
-        this._numAttributes = 6;
-        this._numVertices = 36;
-        this._bufferData = new Float32Array([
-            // position(x,y,z), normal(x,y,z)
-            1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
-            -1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
-            -1.0, -1.0, -1.0, 0.0, -1.0, 0.0,
-            1.0, -1.0, -1.0, 0.0, -1.0, 0.0,
-            1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
-            -1.0, -1.0, -1.0, 0.0, -1.0, 0.0,
-            1.0, 1.0, 1.0, 1.0, 0.0, 0.0,
-            1.0, -1.0, 1.0, 1.0, 0.0, 0.0,
-            1.0, -1.0, -1.0, 1.0, 0.0, 0.0,
-            1.0, 1.0, -1.0, 1.0, 0.0, 0.0,
-            1.0, 1.0, 1.0, 1.0, 0.0, 0.0,
-            1.0, -1.0, -1.0, 1.0, 0.0, 0.0,
-            -1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
-            1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
-            1.0, 1.0, -1.0, 0.0, 1.0, 0.0,
-            -1.0, 1.0, -1.0, 0.0, 1.0, 0.0,
-            -1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
-            1.0, 1.0, -1.0, 0.0, 1.0, 0.0,
-            -1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
-            -1.0, 1.0, 1.0, -1.0, 0.0, 0.0,
-            -1.0, 1.0, -1.0, -1.0, 0.0, 0.0,
-            -1.0, -1.0, -1.0, -1.0, 0.0, 0.0,
-            -1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
-            -1.0, 1.0, -1.0, -1.0, 0.0, 0.0,
-            1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
-            -1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
-            -1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
-            -1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
-            1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
-            1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
-            1.0, -1.0, -1.0, 0.0, 0.0, -1.0,
-            -1.0, -1.0, -1.0, 0.0, 0.0, -1.0,
-            -1.0, 1.0, -1.0, 0.0, 0.0, -1.0,
-            1.0, 1.0, -1.0, 0.0, 0.0, -1.0,
-            1.0, -1.0, -1.0, 0.0, 0.0, -1.0,
-            -1.0, 1.0, -1.0, 0.0, 0.0, -1.0
-        ]);
-    }
-}
-
 // CONCATENATED MODULE: ./src/Main.ts
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Main", function() { return Main_Main; });
+
 
 
 
@@ -7612,7 +7787,9 @@ class Main_Main {
         // Initialize objects
         this.cube = new Cube_Cube();
         this.cube.createBuffer(this.gpu);
-        const cubeScale = 2.0;
+        // const cubeScale:number = 2.0;
+        // const cubeScale:number = 4.0;
+        const cubeScale = 0.04;
         const cubeRange = 100;
         const pi2 = Math.PI * 2;
         this.cubeList = [];
@@ -7641,6 +7818,10 @@ class Main_Main {
         vertexUniform.createBuffer(this.gpu);
         this.lightHelper.vertexUniform = vertexUniform;
         vertexUniform.baseColor = Main_Main.COLOR_DIRECTIONAL_LIGHT;
+        this.model = new GLTF_GLTF();
+        // await this.model.loadModel('assets/Suzanne.gltf', true);
+        await this.model.loadModel('assets/Duck.gltf', true);
+        this.model.createBuffer(this.gpu);
         // Initialize camera
         this.camera = new Camera_Camera(45 * Main_Main.RAD, Main_Main.CANVAS_WIDTH / Main_Main.CANVAS_HEIGHT, 0.1, 1000.0);
         this.cameraController = new RoundCameraController_RoundCameraController(this.camera, this.canvas);
@@ -7684,7 +7865,8 @@ class Main_Main {
         const cubeRenderCommandEncoder = commandBuffer.createRenderCommandEncoderWithDescriptor(this.renderPassDescriptor);
         cubeRenderCommandEncoder.setRenderPipelineState(this.cubeRenderPipelineState);
         cubeRenderCommandEncoder.setDepthStencilState(this.depthStencilState);
-        cubeRenderCommandEncoder.setVertexBuffer(this.cube.vertexBuffer, 0, 0);
+        // cubeRenderCommandEncoder.setVertexBuffer(this.cube.vertexBuffer, 0, 0);
+        cubeRenderCommandEncoder.setVertexBuffer(this.model.vertexBuffer, 0, 0);
         for (let i = 0; i < cubeLength; i++) {
             const obj = this.cubeList[i];
             const objMMatrix = obj.getModelMtx();
@@ -7695,7 +7877,8 @@ class Main_Main {
             vertexUniform.modelMatrix = objMMatrix;
             vertexUniform.directionalLightDirection = lightDirection;
             cubeRenderCommandEncoder.setVertexBuffer(obj.vertexUniform.buffer, 0, 1);
-            cubeRenderCommandEncoder.drawPrimitives(3 /* triangle */, 0, this.cube.numVertices);
+            // cubeRenderCommandEncoder.drawPrimitives(WebGPUPrimitiveType.triangle, 0, this.cube.numVertices);
+            cubeRenderCommandEncoder.drawPrimitives(3 /* triangle */, 0, this.model.numVertices);
         }
         cubeRenderCommandEncoder.endEncoding();
         // Render light helper
@@ -7723,7 +7906,7 @@ class Main_Main {
 Main_Main.RAD = Math.PI / 180;
 Main_Main.CANVAS_WIDTH = innerWidth * devicePixelRatio;
 Main_Main.CANVAS_HEIGHT = innerHeight * devicePixelRatio;
-Main_Main.CUBE_NUM = 1000;
+Main_Main.CUBE_NUM = 3000;
 Main_Main.COLOR_AMBIENT_LIGHT = new Float32Array([0.2, 0.2, 0.2, 1.0]);
 Main_Main.COLOR_DIRECTIONAL_LIGHT = new Float32Array([0.8, 0.8, 0.8, 1.0]);
 window.addEventListener('DOMContentLoaded', () => {

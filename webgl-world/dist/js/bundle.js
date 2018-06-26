@@ -7318,6 +7318,202 @@ class Cube_Cube extends Primitive {
     }
 }
 
+// CONCATENATED MODULE: ./src/project/GLTFLoader.ts
+class GLTFLoader {
+    static async load(url) {
+        const json = await fetch(url).then((response) => response.json());
+        const pathArr = url.split('/');
+        pathArr.pop();
+        const relativePath = pathArr.join('/');
+        if (!GLTFLoader.glcontext) {
+            GLTFLoader.glcontext = document.createElement('canvas').getContext('webgl');
+        }
+        const glcontext = GLTFLoader.glcontext;
+        console.log(json);
+        const mesh = json.meshes[0];
+        const primitive = mesh.primitives[0];
+        const data = {
+            primitiveType: 0 /* POINTS */,
+            numVertices: 0,
+            position: null,
+            normal: null,
+            indices: null
+        };
+        switch (primitive.mode) {
+            case glcontext.POINTS:
+                data.primitiveType = 0 /* POINTS */;
+                break;
+            case glcontext.LINES:
+                data.primitiveType = 1 /* LINES */;
+                break;
+            case glcontext.TRIANGLES:
+                data.primitiveType = 2 /* TRIANGLES */;
+                break;
+            default:
+                return data;
+        }
+        const bufferDataList = await GLTFLoader.loadBuffers(json.buffers, relativePath);
+        const accessorsDataList = GLTFLoader.loadAccessors(json.accessors, json.bufferViews, bufferDataList);
+        const attributes = primitive.attributes;
+        const positionAccessorIndex = attributes.POSITION;
+        const positionAccessor = json.accessors[positionAccessorIndex];
+        data.numVertices = positionAccessor.count;
+        data.position = {
+            data: accessorsDataList[positionAccessorIndex],
+            num: GLTFLoader.getAccessorTypeSize(positionAccessor.type),
+            min: positionAccessor.min,
+            max: positionAccessor.max
+        };
+        // console.log(data);
+        if (attributes.hasOwnProperty('NORMAL')) {
+            const normalAccessorIndex = attributes.NORMAL;
+            data.normal = {
+                data: accessorsDataList[normalAccessorIndex],
+                num: GLTFLoader.getAccessorTypeSize(json.accessors[normalAccessorIndex].type)
+            };
+        }
+        if (primitive.hasOwnProperty('indices')) {
+            const indicesAccessorIndex = primitive.indices;
+            data.indices = {
+                data: accessorsDataList[indicesAccessorIndex],
+                num: GLTFLoader.getAccessorTypeSize(json.accessors[indicesAccessorIndex].type)
+            };
+        }
+        return data;
+    }
+    static async loadBuffers(buffers, relativePath) {
+        const bufferDataList = [];
+        const length = buffers.length;
+        for (let i = 0; i < length; i++) {
+            const buffer = buffers[i];
+            const bufferData = await fetch(relativePath + '/' + buffer.uri).then((response) => response.arrayBuffer());
+            if (bufferData.byteLength === buffer.byteLength) {
+                bufferDataList.push(bufferData);
+            }
+        }
+        return bufferDataList;
+    }
+    static loadAccessors(accessors, bufferViews, bufferDataList) {
+        const accessorsDataList = [];
+        const length = accessors.length;
+        for (let i = 0; i < length; i++) {
+            const accessor = accessors[i];
+            const bufferView = bufferViews[accessor.bufferView];
+            const bufferData = bufferDataList[bufferView.buffer];
+            switch (accessor.componentType) {
+                case GLTFLoader.glcontext.BYTE:
+                    break;
+                case GLTFLoader.glcontext.UNSIGNED_BYTE:
+                    break;
+                case GLTFLoader.glcontext.SHORT:
+                    break;
+                case GLTFLoader.glcontext.UNSIGNED_SHORT:
+                    const uint16Array = new Uint16Array(bufferData, bufferView.byteOffset + accessor.byteOffset, accessor.count * GLTFLoader.getAccessorTypeSize(accessor.type));
+                    accessorsDataList.push(uint16Array);
+                    break;
+                case GLTFLoader.glcontext.INT:
+                    break;
+                case GLTFLoader.glcontext.UNSIGNED_INT:
+                    break;
+                case GLTFLoader.glcontext.FLOAT:
+                    const float32Array = new Float32Array(bufferData, bufferView.byteOffset + accessor.byteOffset, accessor.count * GLTFLoader.getAccessorTypeSize(accessor.type));
+                    accessorsDataList.push(float32Array);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return accessorsDataList;
+    }
+    static getAccessorTypeSize(accessorType) {
+        let size = 0;
+        switch (accessorType) {
+            case 'SCALAR':
+                size = 1 /* SCALAR */;
+                break;
+            case 'VEC2':
+                size = 2 /* VEC2 */;
+                break;
+            case 'VEC3':
+                size = 3 /* VEC3 */;
+                break;
+            case 'VEC4':
+                size = 4 /* VEC4 */;
+                break;
+            case 'MAT2':
+                size = 4 /* MAT2 */;
+                break;
+            case 'MAT3':
+                size = 9 /* MAT3 */;
+                break;
+            case 'MAT4':
+                size = 16 /* MAT4 */;
+                break;
+        }
+        return size;
+    }
+    constructor() {
+    }
+}
+
+// CONCATENATED MODULE: ./src/project/GLTF.ts
+
+
+class GLTF_GLTF extends Primitive {
+    get bufferData() {
+        return this._bufferData;
+    }
+    constructor() {
+        super();
+    }
+    async loadModel(url, centering = false) {
+        const data = await GLTFLoader.load(url);
+        const numIndices = data.indices.data.length;
+        this._numAttributes = data.position.num + data.normal.num;
+        this._numVertices = numIndices;
+        let centerX = 0.0;
+        let centerY = 0.0;
+        let centerZ = 0.0;
+        if (centering) {
+            const posMin = data.position.min;
+            const posMax = data.position.max;
+            centerX = (posMax[0] - posMin[0]) / 2 + posMin[0];
+            centerY = (posMax[1] - posMin[1]) / 2 + posMin[1];
+            centerZ = (posMax[2] - posMin[2]) / 2 + posMin[2];
+        }
+        this._bufferData = new Float32Array(this._numAttributes * this._numVertices);
+        for (let i = 0; i < this._numVertices; i++) {
+            const bufferVertexOffset = i * 6;
+            const sourceVertexOffset = data.indices.data[i] * 3;
+            this._bufferData[bufferVertexOffset] = data.position.data[sourceVertexOffset] - centerX;
+            this._bufferData[bufferVertexOffset + 1] = data.position.data[sourceVertexOffset + 1] - centerY;
+            this._bufferData[bufferVertexOffset + 2] = data.position.data[sourceVertexOffset + 2] - centerZ;
+            this._bufferData[bufferVertexOffset + 3] = data.normal.data[sourceVertexOffset];
+            this._bufferData[bufferVertexOffset + 4] = data.normal.data[sourceVertexOffset + 1];
+            this._bufferData[bufferVertexOffset + 5] = data.normal.data[sourceVertexOffset + 2];
+        }
+    }
+    createBuffer(gl) {
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this._bufferData), gl.STATIC_DRAW);
+        const positionAttribute = {
+            name: 'position',
+            byteStride: 24,
+            bufferOffset: 0,
+            buffer: buffer
+        };
+        this.vboList.push(positionAttribute);
+        const normalAttribute = {
+            name: 'normal',
+            byteStride: 24,
+            bufferOffset: 12,
+            buffer: buffer
+        };
+        this.vboList.push(normalAttribute);
+    }
+}
+
 // CONCATENATED MODULE: ./src/project/LightingShaderProgram.ts
 
 class LightingShaderProgram_LightingShaderProgram extends ProgramObject {
@@ -7809,6 +8005,7 @@ class SceneObject_SceneObject {
 
 
 
+
 class Main_Main {
     constructor() {
         console.log(new Date());
@@ -7841,7 +8038,9 @@ class Main_Main {
         // Initialize objects
         this.cube = new Cube_Cube();
         this.cube.createBuffer(this.gl);
-        const cubeScale = 2.0;
+        // const cubeScale:number = 2.0;
+        // const cubeScale:number = 4.0;
+        const cubeScale = 0.04;
         const cubeRange = 100;
         const pi2 = Math.PI * 2;
         this.cubeList = [];
@@ -7866,6 +8065,10 @@ class Main_Main {
         const vertexUniform = new VertexUniform_VertexUniform();
         this.lightHelper.vertexUniform = vertexUniform;
         vertexUniform.baseColor = Main_Main.COLOR_DIRECTIONAL_LIGHT;
+        this.model = new GLTF_GLTF();
+        // await this.model.loadModel('assets/Suzanne.gltf', true);
+        await this.model.loadModel('assets/Duck.gltf', true);
+        this.model.createBuffer(this.gl);
         // Initialize camera
         this.camera = new Camera_Camera(45 * Main_Main.RAD, Main_Main.CANVAS_WIDTH / Main_Main.CANVAS_HEIGHT, 0.1, 1000.0);
         this.cameraController = new RoundCameraController_RoundCameraController(this.camera, this.canvas);
@@ -7902,7 +8105,8 @@ class Main_Main {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         // Render cube
         this.cubeProgram.bindProgram(this.gl);
-        this.cube.bindVertexbuffer(this.gl, this.cubeProgram);
+        // this.cube.bindVertexbuffer(this.gl, this.cubeProgram);
+        this.model.bindVertexbuffer(this.gl, this.cubeProgram);
         for (let i = 0; i < cubeLength; i++) {
             const obj = this.cubeList[i];
             const objMMatrix = obj.getModelMtx();
@@ -7913,7 +8117,8 @@ class Main_Main {
             this.cubeProgram.getUniform('directionalLightDirection').vector3 = lightDirection;
             this.cubeProgram.getUniform('baseColor').vector4 = obj.vertexUniform.baseColor;
             this.cubeProgram.bindUniform(this.gl);
-            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.cube.numVertices);
+            // this.gl.drawArrays(this.gl.TRIANGLES, 0, this.cube.numVertices);
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.model.numVertices);
         }
         // Render light helper
         this.lightHelperProgram.bindProgram(this.gl);
@@ -7933,7 +8138,7 @@ class Main_Main {
 Main_Main.RAD = Math.PI / 180;
 Main_Main.CANVAS_WIDTH = innerWidth * devicePixelRatio;
 Main_Main.CANVAS_HEIGHT = innerHeight * devicePixelRatio;
-Main_Main.CUBE_NUM = 1000;
+Main_Main.CUBE_NUM = 3000;
 Main_Main.COLOR_AMBIENT_LIGHT = vec4_namespaceObject.fromValues(0.2, 0.2, 0.2, 1.0);
 Main_Main.COLOR_DIRECTIONAL_LIGHT = vec4_namespaceObject.fromValues(0.8, 0.8, 0.8, 1.0);
 window.addEventListener('DOMContentLoaded', () => {
