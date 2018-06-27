@@ -8093,7 +8093,7 @@ class Main_Main {
         this.camera = new Camera_Camera(45 * Main_Main.RAD, Main_Main.CANVAS_WIDTH / Main_Main.CANVAS_HEIGHT, 0.1, 1000.0);
         this.cameraController = new RoundCameraController_RoundCameraController(this.camera, this.canvas);
         this.canvas.style.cursor = 'move';
-        this.cameraController.radius = isIPhone ? 500 : 150;
+        this.cameraController.radius = isIPhone ? 250 : 150;
         this.cameraController.radiusOffset = 2;
         this.cameraController.rotate(0, 0);
         // Initialize values

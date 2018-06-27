@@ -124,7 +124,7 @@ export class Main {
     this.camera = new Camera(45 * Main.RAD, Main.CANVAS_WIDTH / Main.CANVAS_HEIGHT, 0.1, 1000.0);
     this.cameraController = new RoundCameraController(this.camera, this.canvas);
     this.canvas.style.cursor = 'move';
-    this.cameraController.radius = isIPhone ? 500 : 150;
+    this.cameraController.radius = isIPhone ? 250 : 150;
     this.cameraController.radiusOffset = 2;
     this.cameraController.rotate(0, 0);
 
