@@ -8039,7 +8039,7 @@ class Main_Main {
         let instanceFolder = gui.addFolder('Instance');
         instanceFolder.open();
         let panel = new GUIPanel();
-        let instanceNumSlider = instanceFolder.add(panel, 'num', 1000, 4000).step(100);
+        let instanceNumSlider = instanceFolder.add(panel, 'num', 1000, 6000).step(100);
         panel.setGUITitle(gui, 'num', 'Num');
         instanceNumSlider.onFinishChange((value) => {
             this.cubeNum = value;
@@ -8059,6 +8059,7 @@ class Main_Main {
         this.canvas.height = Main_Main.CANVAS_HEIGHT;
         // Create WebGLRenderingContext
         this.gl = this.canvas.getContext('webgl');
+        const isIPhone = /iP(hone|(o|a)d)/.test(navigator.userAgent);
         // Create Program
         this.cubeProgram = new LightingShaderProgram_LightingShaderProgram();
         this.cubeProgram.creatProgram(this.gl);
@@ -8092,7 +8093,7 @@ class Main_Main {
         this.camera = new Camera_Camera(45 * Main_Main.RAD, Main_Main.CANVAS_WIDTH / Main_Main.CANVAS_HEIGHT, 0.1, 1000.0);
         this.cameraController = new RoundCameraController_RoundCameraController(this.camera, this.canvas);
         this.canvas.style.cursor = 'move';
-        this.cameraController.radius = 150;
+        this.cameraController.radius = isIPhone ? 500 : 150;
         this.cameraController.radiusOffset = 2;
         this.cameraController.rotate(0, 0);
         // Initialize values

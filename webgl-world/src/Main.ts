@@ -59,7 +59,7 @@ export class Main {
     let instanceFolder:GUI = gui.addFolder('Instance');
     instanceFolder.open();
     let panel:GUIPanel = new GUIPanel();
-    let instanceNumSlider:GUIController = instanceFolder.add(panel, 'num', 1000, 4000).step(100);
+    let instanceNumSlider:GUIController = instanceFolder.add(panel, 'num', 1000, 6000).step(100);
     panel.setGUITitle(gui, 'num', 'Num');
     instanceNumSlider.onFinishChange((value:number) => {
       this.cubeNum = value;
@@ -81,6 +81,8 @@ export class Main {
 
     // Create WebGLRenderingContext
     this.gl = this.canvas.getContext('webgl');
+
+    const isIPhone:boolean = /iP(hone|(o|a)d)/.test(navigator.userAgent);
 
     // Create Program
     this.cubeProgram = new LightingShaderProgram();
@@ -122,7 +124,7 @@ export class Main {
     this.camera = new Camera(45 * Main.RAD, Main.CANVAS_WIDTH / Main.CANVAS_HEIGHT, 0.1, 1000.0);
     this.cameraController = new RoundCameraController(this.camera, this.canvas);
     this.canvas.style.cursor = 'move';
-    this.cameraController.radius = 150;
+    this.cameraController.radius = isIPhone ? 500 : 150;
     this.cameraController.radiusOffset = 2;
     this.cameraController.rotate(0, 0);
 
