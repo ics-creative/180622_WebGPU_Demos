@@ -43,8 +43,8 @@ float4 textureSample(device uint8_t *textureData,
                      float width,
                      float height)
 {
-  uint ix = width * uv[0];
-  uint iy = height * (1.0 - uv[1]);
+  uint ix = (width - 1) * uv[0];
+  uint iy = (height - 1) * (1.0 - uv[1]);
   uint idx = (iy * width + ix) * 4;
   float r = textureData[idx];
   float g = textureData[idx + 1];
