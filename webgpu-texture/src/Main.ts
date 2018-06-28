@@ -57,6 +57,8 @@ export class Main {
     // Create WebGPUCommandQueue
     this.commandQueue = this.gpu.createCommandQueue();
 
+    const isIPhone:boolean = /iP(hone|(o|a)d)/.test(navigator.userAgent);
+
     // Load metal shader file and create each WebGPUFunction to use for rendering and computing
     const shader:string = await fetch('shader/defaultShader.metal').then((response:Response) => response.text());
     const library:WebGPULibrary = this.gpu.createLibrary(shader);
@@ -103,7 +105,7 @@ export class Main {
     this.camera = new Camera(45 * Main.RAD, Main.CANVAS_WIDTH / Main.CANVAS_HEIGHT, 0.1, 1000.0);
     this.cameraController = new RoundCameraController(this.camera, this.canvas);
     this.canvas.style.cursor = 'move';
-    this.cameraController.radius = 150;
+    this.cameraController.radius = isIPhone ? 250 : 150;
     this.cameraController.radiusOffset = 2;
     this.cameraController.rotate(0, 0);
 
