@@ -9,6 +9,7 @@ import {Camera} from './webgpu/Camera';
 import {Primitive} from './webgpu/Primitive';
 import {RoundCameraController} from './webgpu/RoundCameraController';
 import {SceneObject} from './webgpu/SceneObject';
+import {WebMetalTranslator} from './webgpu/WebMetalTranslator';
 
 declare let dat:any;
 
@@ -51,7 +52,13 @@ export class Main {
 
   private async init():Promise<void> {
     // Check whether WebGPU is enabled
-    if (!('WebGPURenderingContext' in window)) {
+    if ('WebMetalRenderingContext' in window) {
+      WebMetalTranslator.useWebMetal = true;
+    }
+    else if ('WebGPURenderingContext' in window && 'WebGPULibrary' in window) {
+      WebMetalTranslator.useWebMetal = false;
+    }
+    else {
       document.body.className = 'error';
       return;
     }
@@ -86,7 +93,7 @@ export class Main {
     this.canvas.height = Main.CANVAS_HEIGHT;
 
     // Create WebGPURenderingContext
-    this.gpu = this.canvas.getContext('webgpu');
+    this.gpu = WebMetalTranslator.createWebGPURenderingContext(this.canvas);
 
     // Create WebGPUCommandQueue
     this.commandQueue = this.gpu.createCommandQueue();
@@ -105,14 +112,14 @@ export class Main {
     }
 
     // Create pipelineState for render
-    const cubeRenderPipelineDescriptor:WebGPURenderPipelineDescriptor = new WebGPURenderPipelineDescriptor();
+    const cubeRenderPipelineDescriptor:WebGPURenderPipelineDescriptor = WebMetalTranslator.createWebGPURenderPipelineDescriptor();
     cubeRenderPipelineDescriptor.vertexFunction = vertexFunction;
     cubeRenderPipelineDescriptor.fragmentFunction = fragmentFunction;
     cubeRenderPipelineDescriptor.colorAttachments[0].pixelFormat = WebGPUPixelFormat.BGRA8Unorm;
     cubeRenderPipelineDescriptor.depthAttachmentPixelFormat = WebGPUPixelFormat.Depth32Float;
     this.cubeRenderPipelineState = this.gpu.createRenderPipelineState(cubeRenderPipelineDescriptor);
 
-    const lightHelperRenderPipelineDescriptor:WebGPURenderPipelineDescriptor = new WebGPURenderPipelineDescriptor();
+    const lightHelperRenderPipelineDescriptor:WebGPURenderPipelineDescriptor = WebMetalTranslator.createWebGPURenderPipelineDescriptor();
     lightHelperRenderPipelineDescriptor.vertexFunction = vertexFunction2;
     lightHelperRenderPipelineDescriptor.fragmentFunction = fragmentFunction;
     lightHelperRenderPipelineDescriptor.colorAttachments[0].pixelFormat = WebGPUPixelFormat.BGRA8Unorm;
@@ -120,19 +127,19 @@ export class Main {
     this.lightHelperRenderPipelineState = this.gpu.createRenderPipelineState(lightHelperRenderPipelineDescriptor);
 
     // Create pipelineState for render depth
-    const depthStencilDescriptor:WebGPUDepthStencilDescriptor = new WebGPUDepthStencilDescriptor();
+    const depthStencilDescriptor:WebGPUDepthStencilDescriptor = WebMetalTranslator.createWebGPUDepthStencilDescriptor();
     depthStencilDescriptor.depthCompareFunction = WebGPUCompareFunction.less;
     depthStencilDescriptor.depthWriteEnabled = true;
     this.depthStencilState = this.gpu.createDepthStencilState(depthStencilDescriptor);
 
     // Create WebGPURenderPassDescriptor
-    this.renderPassDescriptor = new WebGPURenderPassDescriptor();
+    this.renderPassDescriptor = WebMetalTranslator.createWebGPURenderPassDescriptor();
     const colorAttachment0:WebGPURenderPassColorAttachmentDescriptor = this.renderPassDescriptor.colorAttachments[0];
     colorAttachment0.storeAction = WebGPUStoreAction.store;
     colorAttachment0.clearColor = [0.3, 0.6, 0.8, 1.0];
 
     // Create depth texture
-    const depthTextureDescriptor:WebGPUTextureDescriptor = new WebGPUTextureDescriptor(
+    const depthTextureDescriptor:WebGPUTextureDescriptor = WebMetalTranslator.createWebGPUTextureDescriptor(
       WebGPUPixelFormat.Depth32Float, Main.CANVAS_WIDTH, Main.CANVAS_HEIGHT, false);
     depthTextureDescriptor.textureType = WebGPUTextureType.type2D;
     depthTextureDescriptor.sampleCount = 1;
