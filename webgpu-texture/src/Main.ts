@@ -6,6 +6,7 @@ import {Camera} from './webgpu/Camera';
 import {RoundCameraController} from './webgpu/RoundCameraController';
 import {SceneObject} from './webgpu/SceneObject';
 import {TextureData} from './webgpu/TextureData';
+import {WebMetalTranslator} from './webgpu/WebMetalTranslator';
 
 export class Main {
   private static RAD:number = Math.PI / 180;
@@ -37,7 +38,13 @@ export class Main {
 
   private async init():Promise<void> {
     // Check whether WebGPU is enabled
-    if (!('WebGPURenderingContext' in window)) {
+    if ('WebMetalRenderingContext' in window) {
+      WebMetalTranslator.useWebMetal = true;
+    }
+    else if ('WebGPURenderingContext' in window && 'WebGPULibrary' in window) {
+      WebMetalTranslator.useWebMetal = false;
+    }
+    else {
       document.body.className = 'error';
       return;
     }
@@ -52,7 +59,7 @@ export class Main {
     this.canvas.height = Main.CANVAS_HEIGHT;
 
     // Create WebGPURenderingContext
-    this.gpu = this.canvas.getContext('webgpu');
+    this.gpu = WebMetalTranslator.createWebGPURenderingContext(this.canvas);
 
     // Create WebGPUCommandQueue
     this.commandQueue = this.gpu.createCommandQueue();
@@ -70,14 +77,14 @@ export class Main {
     }
 
     // Create pipelineState for render
-    const renderPipelineDescriptor:WebGPURenderPipelineDescriptor = new WebGPURenderPipelineDescriptor();
+    const renderPipelineDescriptor:WebGPURenderPipelineDescriptor = WebMetalTranslator.createWebGPURenderPipelineDescriptor();
     renderPipelineDescriptor.vertexFunction = vertexFunction;
     renderPipelineDescriptor.fragmentFunction = fragmentFunction;
     renderPipelineDescriptor.colorAttachments[0].pixelFormat = WebGPUPixelFormat.BGRA8Unorm;
     this.renderPipelineState = this.gpu.createRenderPipelineState(renderPipelineDescriptor);
 
     // Create WebGPURenderPassDescriptor
-    this.renderPassDescriptor = new WebGPURenderPassDescriptor();
+    this.renderPassDescriptor = WebMetalTranslator.createWebGPURenderPassDescriptor();
     const colorAttachment0:WebGPURenderPassColorAttachmentDescriptor = this.renderPassDescriptor.colorAttachments[0];
     colorAttachment0.storeAction = WebGPUStoreAction.store;
     colorAttachment0.loadAction = WebGPULoadAction.clear;
