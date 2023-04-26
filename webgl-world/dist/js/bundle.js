@@ -8039,7 +8039,7 @@ class Main_Main {
         let instanceFolder = gui.addFolder('Instance');
         instanceFolder.open();
         let panel = new GUIPanel();
-        let instanceNumSlider = instanceFolder.add(panel, 'num', 1000, 6000).step(100);
+        let instanceNumSlider = instanceFolder.add(panel, 'num', 1000, 20000).step(100);
         panel.setGUITitle(gui, 'num', 'Num');
         instanceNumSlider.onFinishChange((value) => {
             this.cubeNum = value;
