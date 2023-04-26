@@ -59,7 +59,7 @@ export class Main {
     let instanceFolder:GUI = gui.addFolder('Instance');
     instanceFolder.open();
     let panel:GUIPanel = new GUIPanel();
-    let instanceNumSlider:GUIController = instanceFolder.add(panel, 'num', 1000, 6000).step(100);
+    let instanceNumSlider:GUIController = instanceFolder.add(panel, 'num', 1000, 20000).step(100);
     panel.setGUITitle(gui, 'num', 'Num');
     instanceNumSlider.onFinishChange((value:number) => {
       this.cubeNum = value;
